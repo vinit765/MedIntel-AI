@@ -92,7 +92,3 @@ copy frontend\.env.example frontend\.env.local
 ## Clinical Safety
 
 MedIntel AI must always present clinical output as informational decision support. It must avoid definitive diagnoses, preserve citations for evidence-backed responses, and make uncertainty visible.
-
-## License
-
-License to be selected before public release.
