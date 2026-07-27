@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils"; // Ensure this matches your shadcn utils path
 import { Button } from "@/components/ui/button";
 import { 
   LayoutDashboard, Users, FileText, Activity, AlertTriangle, 
-  Library, FileBarChart, Bot, Settings, HelpCircle, LifeBuoy, Stethoscope 
+  Library, FileBarChart, Bot, Settings, LifeBuoy, Stethoscope 
 } from "lucide-react";
 
 const mainNav = [
@@ -22,7 +22,6 @@ const mainNav = [
 const bottomNav = [
   { name: "Activity", href: "/activity", icon: Activity },
   { name: "Settings", href: "/settings", icon: Settings },
-  { name: "Help", href: "/help", icon: HelpCircle },
 ];
 
 export function Sidebar() {
@@ -65,35 +64,53 @@ export function Sidebar() {
           );
         })}
         
-        {/* AI Copilot Call to Action */}
+        {/* AI Copilot Call to Action - Wrapped in Link */}
         <div className="mt-6 mb-4 px-2">
-          <Button className="w-full bg-teal-800 hover:bg-teal-900 text-white gap-2 shadow-md">
-            <Bot className="w-5 h-5" />
-            AI Copilot
-          </Button>
+          <Link href="/copilot">
+            <Button className={cn(
+              "w-full bg-teal-800 hover:bg-teal-900 text-white gap-2 shadow-md justify-start px-4 py-6",
+              pathname === "/copilot" && "ring-2 ring-teal-500"
+            )}>
+              <Bot className="w-5 h-5" />
+              AI Copilot
+            </Button>
+          </Link>
         </div>
         
         <div className="h-px bg-slate-100 my-2 mx-2"></div>
 
-        {bottomNav.map((item) => (
-          <Link key={item.name} href={item.href}>
-            <Button
-              variant="ghost"
-              className="w-full justify-start gap-3 px-3 py-5 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-teal-700"
-            >
-              <item.icon className="w-5 h-5 text-slate-400" />
-              {item.name}
-            </Button>
-          </Link>
-        ))}
+        {bottomNav.map((item) => {
+          const isActive = pathname === item.href;
+          return (
+            <Link key={item.name} href={item.href}>
+              <Button
+                variant="ghost"
+                className={cn(
+                  "w-full justify-start gap-3 px-3 py-5 rounded-lg text-sm font-medium transition-all",
+                  isActive 
+                    ? "bg-teal-50 text-teal-800 border-l-4 border-teal-600 shadow-sm" 
+                    : "text-slate-600 hover:bg-slate-50 hover:text-teal-700"
+                )}
+              >
+                <item.icon className={cn("w-5 h-5", isActive ? "text-teal-600" : "text-slate-400")} />
+                {item.name}
+              </Button>
+            </Link>
+          );
+        })}
       </nav>
 
-      {/* Support Footer */}
+      {/* Support Footer - Wrapped in Link */}
       <div className="p-4 border-t border-slate-100">
-        <Button variant="ghost" className="w-full justify-start gap-3 text-slate-600 hover:bg-slate-50">
-          <LifeBuoy className="w-5 h-5 text-slate-400" />
-          Support
-        </Button>
+        <Link href="/support">
+          <Button variant="ghost" className={cn(
+            "w-full justify-start gap-3 text-slate-600 hover:bg-slate-50 py-5",
+            pathname === "/support" && "bg-teal-50 text-teal-800 border-l-4 border-teal-600"
+          )}>
+            <LifeBuoy className={cn("w-5 h-5", pathname === "/support" ? "text-teal-600" : "text-slate-400")} />
+            Support
+          </Button>
+        </Link>
       </div>
     </aside>
   );
