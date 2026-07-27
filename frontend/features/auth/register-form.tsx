@@ -1,101 +1,359 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { UserPlus } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import {
+  User,
+  Mail,
+  Lock,
+  Eye,
+  EyeOff,
+  ArrowRight,
+} from "lucide-react";
 
-import { saveAuthSession } from "@/features/auth/auth-storage";
-import { loginUser, registerUser } from "@/services/auth-service";
-
-const registerSchema = z.object({
-  full_name: z.string().min(2, "Full name must be at least 2 characters.").max(120),
-  email: z.string().email("Enter a valid email address."),
-  password: z.string().min(8, "Password must be at least 8 characters.")
-});
-
-type RegisterFormValues = z.infer<typeof registerSchema>;
-
-export function RegisterForm() {
+export default function RegisterForm() {
   const router = useRouter();
-  const [formError, setFormError] = useState<string | null>(null);
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting }
-  } = useForm<RegisterFormValues>({
-    resolver: zodResolver(registerSchema),
-    defaultValues: {
-      full_name: "",
-      email: "",
-      password: ""
-    }
+
+  const [loading, setLoading] = useState(false);
+
+  const [showPassword, setShowPassword] = useState(false);
+
+  const [showConfirmPassword, setShowConfirmPassword] =
+    useState(false);
+
+  const [formData, setFormData] = useState({
+    fullName: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
   });
 
-  async function onSubmit(values: RegisterFormValues) {
-    setFormError(null);
+  const [errors, setErrors] = useState({
+    fullName: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+  });
+
+  const validate = () => {
+    const newErrors = {
+      fullName: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+    };
+
+    let valid = true;
+
+    if (!formData.fullName.trim()) {
+      newErrors.fullName = "Full name is required";
+      valid = false;
+    }
+
+    if (!formData.email) {
+      newErrors.email = "Email is required";
+      valid = false;
+    } else if (
+      !/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(formData.email)
+    ) {
+      newErrors.email = "Enter a valid email";
+      valid = false;
+    }
+
+    if (formData.password.length < 8) {
+      newErrors.password =
+        "Password must be at least 8 characters";
+      valid = false;
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      newErrors.confirmPassword =
+        "Passwords do not match";
+      valid = false;
+    }
+
+    setErrors(newErrors);
+
+    return valid;
+  };
+
+  async function handleSubmit(
+    e: React.FormEvent<HTMLFormElement>
+  ) {
+    e.preventDefault();
+
+    if (!validate()) return;
+
     try {
-      await registerUser(values);
-      const session = await loginUser({ email: values.email, password: values.password });
-      saveAuthSession(session);
-      router.push("/dashboard");
-    } catch {
-      setFormError("Unable to create an account with those details.");
+      setLoading(true);
+
+      // Replace with FastAPI Register API
+
+      await new Promise((resolve) =>
+        setTimeout(resolve, 1500)
+      );
+
+      router.push("/login");
+    } finally {
+      setLoading(false);
     }
   }
 
   return (
-    <form className="mt-6 space-y-4" onSubmit={handleSubmit(onSubmit)}>
-      <div>
-        <label className="text-sm font-medium text-slate-700" htmlFor="full_name">
-          Full name
-        </label>
-        <input
-          className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-primary"
-          id="full_name"
-          type="text"
-          autoComplete="name"
-          {...register("full_name")}
-        />
-        {errors.full_name ? <p className="mt-1 text-sm text-red-600">{errors.full_name.message}</p> : null}
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4">
+
+      <div className="w-full max-w-md">
+
+        {/* Logo */}
+
+        <div className="mb-8 flex items-center justify-center gap-3">
+
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-teal-700 text-xl font-bold text-white">
+            +
+          </div>
+
+          <h1 className="text-3xl font-bold text-teal-900">
+            MedIntel AI
+          </h1>
+
+        </div>
+
+        {/* Card */}
+
+        <div className="rounded-2xl border border-gray-200 bg-white p-8 shadow-xl">
+
+          <h2 className="text-3xl font-bold">
+            Create Account
+          </h2>
+
+          <p className="mt-2 text-gray-500">
+            Join MedIntel AI to access Clinical Intelligence.
+          </p>
+
+          <form
+            onSubmit={handleSubmit}
+            className="mt-8 space-y-5"
+          >
+
+            {/* Full Name */}
+
+            <div>
+
+              <label className="font-medium">
+                Full Name
+              </label>
+
+              <div className="relative mt-2">
+
+                <User
+                  size={20}
+                  className="absolute left-3 top-3.5 text-gray-400"
+                />
+
+                <input
+                  type="text"
+                  placeholder="Dr. John Doe"
+                  value={formData.fullName}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      fullName: e.target.value,
+                    })
+                  }
+                  className="w-full rounded-lg border py-3 pl-11 pr-4 focus:border-teal-600 focus:ring-2 focus:ring-teal-600 outline-none"
+                />
+
+              </div>
+
+              {errors.fullName && (
+                <p className="mt-1 text-sm text-red-500">
+                  {errors.fullName}
+                </p>
+              )}
+
+            </div>
+
+            {/* Email */}
+
+            <div>
+
+              <label className="font-medium">
+                Email Address
+              </label>
+
+              <div className="relative mt-2">
+
+                <Mail
+                  size={20}
+                  className="absolute left-3 top-3.5 text-gray-400"
+                />
+
+                <input
+                  type="email"
+                  placeholder="doctor@hospital.com"
+                  value={formData.email}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      email: e.target.value,
+                    })
+                  }
+                  className="w-full rounded-lg border py-3 pl-11 pr-4 focus:border-teal-600 focus:ring-2 focus:ring-teal-600 outline-none"
+                />
+
+              </div>
+
+              {errors.email && (
+                <p className="mt-1 text-sm text-red-500">
+                  {errors.email}
+                </p>
+              )}
+
+            </div>
+
+            {/* Password */}
+
+            <div>
+
+              <label className="font-medium">
+                Password
+              </label>
+
+              <div className="relative mt-2">
+
+                <Lock
+                  size={20}
+                  className="absolute left-3 top-3.5 text-gray-400"
+                />
+
+                <input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Minimum 8 characters"
+                  value={formData.password}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      password: e.target.value,
+                    })
+                  }
+                  className="w-full rounded-lg border py-3 pl-11 pr-12 focus:border-teal-600 focus:ring-2 focus:ring-teal-600 outline-none"
+                />
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setShowPassword(!showPassword)
+                  }
+                  className="absolute right-3 top-3"
+                >
+                  {showPassword ? (
+                    <EyeOff size={20} />
+                  ) : (
+                    <Eye size={20} />
+                  )}
+                </button>
+
+              </div>
+
+              {errors.password && (
+                <p className="mt-1 text-sm text-red-500">
+                  {errors.password}
+                </p>
+              )}
+
+            </div>
+
+            {/* Confirm Password */}
+
+            <div>
+
+              <label className="font-medium">
+                Confirm Password
+              </label>
+
+              <div className="relative mt-2">
+
+                <Lock
+                  size={20}
+                  className="absolute left-3 top-3.5 text-gray-400"
+                />
+
+                <input
+                  type={
+                    showConfirmPassword
+                      ? "text"
+                      : "password"
+                  }
+                  placeholder="Confirm password"
+                  value={formData.confirmPassword}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      confirmPassword:
+                        e.target.value,
+                    })
+                  }
+                  className="w-full rounded-lg border py-3 pl-11 pr-12 focus:border-teal-600 focus:ring-2 focus:ring-teal-600 outline-none"
+                />
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setShowConfirmPassword(
+                      !showConfirmPassword
+                    )
+                  }
+                  className="absolute right-3 top-3"
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff size={20} />
+                  ) : (
+                    <Eye size={20} />
+                  )}
+                </button>
+
+              </div>
+
+              {errors.confirmPassword && (
+                <p className="mt-1 text-sm text-red-500">
+                  {errors.confirmPassword}
+                </p>
+              )}
+
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-teal-700 py-3 font-semibold text-white transition hover:bg-teal-800"
+            >
+              {loading ? (
+                "Creating Account..."
+              ) : (
+                <>
+                  Create Account
+                  <ArrowRight size={18} />
+                </>
+              )}
+            </button>
+
+          </form>
+
+        </div>
+
+        <div className="mt-6 text-center text-gray-600">
+          Already have an account?{" "}
+          <Link
+            href="/login"
+            className="font-semibold text-teal-700 hover:underline"
+          >
+            Sign In
+          </Link>
+        </div>
+
       </div>
-      <div>
-        <label className="text-sm font-medium text-slate-700" htmlFor="email">
-          Email
-        </label>
-        <input
-          className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-primary"
-          id="email"
-          type="email"
-          autoComplete="email"
-          {...register("email")}
-        />
-        {errors.email ? <p className="mt-1 text-sm text-red-600">{errors.email.message}</p> : null}
-      </div>
-      <div>
-        <label className="text-sm font-medium text-slate-700" htmlFor="password">
-          Password
-        </label>
-        <input
-          className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-primary"
-          id="password"
-          type="password"
-          autoComplete="new-password"
-          {...register("password")}
-        />
-        {errors.password ? <p className="mt-1 text-sm text-red-600">{errors.password.message}</p> : null}
-      </div>
-      {formError ? <p className="text-sm text-red-600">{formError}</p> : null}
-      <button
-        className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-70"
-        disabled={isSubmitting}
-        type="submit"
-      >
-        <UserPlus className="h-4 w-4" aria-hidden="true" />
-        {isSubmitting ? "Creating account" : "Create account"}
-      </button>
-    </form>
+
+    </div>
   );
 }
