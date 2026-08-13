@@ -63,15 +63,33 @@ export default function LoginForm() {
     try {
       setLoading(true);
 
-      // TODO:
-      // Replace with FastAPI Login API
+      const response = await fetch("http://localhost:8000/api/v1/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+        }),
+      });
 
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      if (!response.ok) {
+        // If the backend sends a 401 Unauthorized, we catch it here
+        const errorData = await response.json();
+        throw new Error(errorData.detail || "Invalid clinical credentials.");
+      }
 
+      const data = await response.json();
+      
+      // Save the JWT token to the browser's local storage so the dashboard can use it later
+      localStorage.setItem("medintel_token", data.access_token);
+
+      // Only redirect if the login was successful
       router.push("/dashboard");
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      alert("Login failed.");
+      setErrors({ ...errors, password: error.message }); // Display the backend error on the UI
     } finally {
       setLoading(false);
     }

@@ -1,23 +1,24 @@
-from sqlalchemy import select
 from sqlalchemy.orm import Session
+from app.database.models import User
+from app.schemas.auth import UserCreate
+from app.core.security import hash_password
 
-from app.models.user import User
+def get_user_by_email(db: Session, email: str) -> User | None:
+    """Fetches a user from the database by email."""
+    return db.query(User).filter(User.email == email).first()
 
-
-class UserRepository:
-    def __init__(self, db: Session) -> None:
-        self.db = db
-
-    def get_by_email(self, email: str) -> User | None:
-        statement = select(User).where(User.email == email.lower())
-        return self.db.scalar(statement)
-
-    def get_by_id(self, user_id: str) -> User | None:
-        return self.db.get(User, user_id)
-
-    def create(self, *, email: str, full_name: str, hashed_password: str) -> User:
-        user = User(email=email.lower(), full_name=full_name, hashed_password=hashed_password)
-        self.db.add(user)
-        self.db.commit()
-        self.db.refresh(user)
-        return user
+def create_user(db: Session, user: UserCreate) -> User:
+    """Hashes the password and saves a new user to the database."""
+    hashed_pwd = hash_password(user.password)
+    
+    db_user = User(
+        email=user.email,
+        hashed_password=hashed_pwd,
+        full_name=user.full_name,
+        role="clinician"  # Default role
+    )
+    
+    db.add(db_user)
+    db.commit()
+    db.refresh(db_user)
+    return db_user

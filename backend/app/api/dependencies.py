@@ -4,11 +4,10 @@ from sqlalchemy.orm import Session
 
 from app.core.security import decode_access_token
 from app.database.session import get_db
-from app.models.user import User
-from app.repositories.user_repository import UserRepository
+from app.database.models import User
+from app.repositories import user_repository
 
 bearer_scheme = HTTPBearer(auto_error=False)
-
 
 def get_current_user(
     credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
@@ -20,6 +19,7 @@ def get_current_user(
             detail="Authentication credentials were not provided.",
         )
 
+    # In our auth_service.py, we encoded the user's email as the subject ("sub")
     subject = decode_access_token(credentials.credentials)
     if subject is None:
         raise HTTPException(
@@ -27,7 +27,8 @@ def get_current_user(
             detail="Invalid or expired access token.",
         )
 
-    user = UserRepository(db).get_by_id(subject)
+    # Look up the user by email using our repository function
+    user = user_repository.get_user_by_email(db, email=subject)
     if user is None or not user.is_active:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
