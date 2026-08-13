@@ -78,9 +78,7 @@ export default function RegisterForm() {
     return valid;
   };
 
-  async function handleSubmit(
-    e: React.FormEvent<HTMLFormElement>
-  ) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
     if (!validate()) return;
@@ -88,13 +86,31 @@ export default function RegisterForm() {
     try {
       setLoading(true);
 
-      // Replace with FastAPI Register API
+      const response = await fetch("http://localhost:8000/api/v1/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+          full_name: formData.fullName, // Maps the frontend "fullName" to the backend "full_name"
+        }),
+      });
 
-      await new Promise((resolve) =>
-        setTimeout(resolve, 1500)
-      );
+      if (!response.ok) {
+        // Catch errors like "Email is already registered" from the backend
+        const errorData = await response.json();
+        throw new Error(errorData.detail || "Registration failed.");
+      }
 
+      alert("Account created successfully! Please sign in.");
+      
+      // Only redirect to login if the database successfully created the account
       router.push("/login");
+    } catch (error: any) {
+      console.error(error);
+      setErrors({ ...errors, email: error.message }); // Display the backend error under the email field
     } finally {
       setLoading(false);
     }

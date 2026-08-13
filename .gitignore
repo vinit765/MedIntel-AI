@@ -116,3 +116,4 @@ coverage/
 *.pem
 *.key
 *.crt
+backend/medintel_ai_backend.egg-info/

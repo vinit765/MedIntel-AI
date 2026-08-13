@@ -1,27 +1,23 @@
-from collections.abc import Generator
-
+import os
 from sqlalchemy import create_engine
-from sqlalchemy.orm import Session, sessionmaker
-from sqlalchemy.pool import StaticPool
+from sqlalchemy.orm import sessionmaker
+from dotenv import load_dotenv
 
-from app.core.config import settings
+load_dotenv()
 
-is_sqlite = settings.database_url.startswith("sqlite")
-is_memory_sqlite = settings.database_url.endswith(":memory:")
-connect_args = {"check_same_thread": False} if is_sqlite else {}
-engine_kwargs = {
-    "connect_args": connect_args,
-    "pool_pre_ping": True,
-}
+# We use a local SQLite file for development. 
+# You can change this in your .env file later (e.g., DATABASE_URL=postgresql://user:password@localhost/dbname)
+SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./medintel.db")
 
-if is_memory_sqlite:
-    engine_kwargs["poolclass"] = StaticPool
+# connect_args={"check_same_thread": False} is only needed for SQLite in FastAPI
+engine = create_engine(
+    SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
+)
 
-engine = create_engine(settings.database_url, **engine_kwargs)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-
-def get_db() -> Generator[Session, None, None]:
+# Dependency to get the database session in our API routes
+def get_db():
     db = SessionLocal()
     try:
         yield db

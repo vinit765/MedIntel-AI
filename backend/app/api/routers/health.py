@@ -1,10 +1,10 @@
 from fastapi import APIRouter
 
-from app.schemas.health import HealthResponse
-
 router = APIRouter()
 
-
-@router.get("/health", response_model=HealthResponse)
-def health_check() -> HealthResponse:
-    return HealthResponse(status="ok", service="medintel-ai-api")
+@router.get("/health")
+def health_check():
+    return {
+        "status": "Online", 
+        "message": "MedIntel API is securely connected and running."
+    }

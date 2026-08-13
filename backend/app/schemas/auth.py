@@ -1,5 +1,4 @@
 from datetime import datetime
-
 from pydantic import BaseModel, EmailStr, Field
 
 
@@ -15,9 +14,10 @@ class LoginRequest(BaseModel):
 
 
 class UserRead(BaseModel):
-    id: str
+    id: int
     email: EmailStr
     full_name: str
+    role: str = "clinician"
     is_active: bool
     created_at: datetime
 

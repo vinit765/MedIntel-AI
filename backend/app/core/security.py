@@ -1,31 +1,32 @@
-from datetime import UTC, datetime, timedelta
-
-from jose import JWTError, jwt
-from passlib.context import CryptContext
-
+from datetime import datetime, timedelta, timezone
+import bcrypt
+import jwt
 from app.core.config import settings
 
-password_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-
 def hash_password(password: str) -> str:
-    return password_context.hash(password)
-
+    """Hashes a password using bcrypt directly (avoids passlib deprecation errors)."""
+    pwd_bytes = password.encode("utf-8")
+    salt = bcrypt.gensalt()
+    hashed_password = bcrypt.hashpw(password=pwd_bytes, salt=salt)
+    return hashed_password.decode("utf-8")
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return password_context.verify(plain_password, hashed_password)
-
+    """Verifies a plain password against the stored bcrypt hash."""
+    password_byte_enc = plain_password.encode("utf-8")
+    hashed_password_bytes = hashed_password.encode("utf-8")
+    return bcrypt.checkpw(password_byte_enc, hashed_password_bytes)
 
 def create_access_token(subject: str) -> str:
-    expires_at = datetime.now(UTC) + timedelta(minutes=settings.access_token_expire_minutes)
+    """Generates a JSON Web Token (JWT) using your app settings."""
+    expires_at = datetime.now(timezone.utc) + timedelta(minutes=settings.access_token_expire_minutes)
     payload = {"sub": subject, "exp": expires_at}
     return jwt.encode(payload, settings.jwt_secret_key, algorithm=settings.jwt_algorithm)
 
-
 def decode_access_token(token: str) -> str | None:
+    """Decodes and validates a JWT."""
     try:
         payload = jwt.decode(token, settings.jwt_secret_key, algorithms=[settings.jwt_algorithm])
-    except JWTError:
+    except jwt.PyJWTError:
         return None
 
     subject = payload.get("sub")

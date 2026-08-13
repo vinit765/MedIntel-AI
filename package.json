@@ -4,9 +4,28 @@
   "private": true,
   "description": "MedIntel AI: Clinical Intelligence & Decision Support Platform",
   "scripts": {
+    "dev:all": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\"",
     "dev:frontend": "cd frontend && npm run dev",
+    "dev:backend": "cd backend && venv\\Scripts\\uvicorn app.main:app --reload",
     "install:frontend": "cd frontend && npm install"
   },
   "author": "",
-  "license": "UNLICENSED"
-} 
+  "license": "UNLICENSED",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vinit765/MedIntel-AI.git"
+  },
+  "keywords": [],
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/vinit765/MedIntel-AI/issues"
+  },
+  "homepage": "https://github.com/vinit765/MedIntel-AI#readme",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
