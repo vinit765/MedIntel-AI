@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { Filter, RefreshCw, Bot, Activity, LogOut } from "lucide-react";
-import { MetricCards } from "@/features/dashboard/metric-cards";
 import { DashboardContent } from "@/features/dashboard/dashboard-content";
 
 // Define the shape of the user data coming from the backend
@@ -83,7 +82,7 @@ export default function DashboardPage() {
               Welcome back, {user?.full_name}
             </h1>
             <p className="text-slate-500">
-              Reviewing clinical intelligence for <span className="font-semibold text-slate-800">St. Jude's Medical Center.</span>
+              AI-assisted clinical intelligence and patient registry overview.
             </p>
           </div>
           
@@ -111,7 +110,6 @@ export default function DashboardPage() {
         </div>
 
         {/* Main Grid Architecture */}
-        <MetricCards />
         <DashboardContent />
 
         {/* Floating Action Button (FAB) for AI Copilot */}

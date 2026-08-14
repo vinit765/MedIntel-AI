@@ -5,22 +5,13 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils"; // Ensure this matches your shadcn utils path
 import { Button } from "@/components/ui/button";
 import { 
-  LayoutDashboard, Users, FileText, Activity, AlertTriangle, 
-  Library, FileBarChart, Bot, Settings, LifeBuoy, Stethoscope 
+  LayoutDashboard, FileText, Library, Bot, Stethoscope 
 } from "lucide-react";
 
 const mainNav = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Medical Reports", href: "/reports", icon: FileText },
-  { name: "AI Analysis", href: "/analysis", icon: Activity },
-  { name: "Risk Intelligence", href: "/risk", icon: AlertTriangle },
   { name: "Evidence Library", href: "/evidence", icon: Library },
-  { name: "Clinical Reports", href: "/clinical-reports", icon: FileBarChart },
-];
-
-const bottomNav = [
-  { name: "Activity", href: "/activity", icon: Activity },
-  { name: "Settings", href: "/settings", icon: Settings },
 ];
 
 export function Sidebar() {
@@ -75,42 +66,7 @@ export function Sidebar() {
             </Button>
           </Link>
         </div>
-        
-        <div className="h-px bg-slate-100 my-2 mx-2"></div>
-
-        {bottomNav.map((item) => {
-          const isActive = pathname === item.href;
-          return (
-            <Link key={item.name} href={item.href}>
-              <Button
-                variant="ghost"
-                className={cn(
-                  "w-full justify-start gap-3 px-3 py-5 rounded-lg text-sm font-medium transition-all",
-                  isActive 
-                    ? "bg-teal-50 text-teal-800 border-l-4 border-teal-600 shadow-sm" 
-                    : "text-slate-600 hover:bg-slate-50 hover:text-teal-700"
-                )}
-              >
-                <item.icon className={cn("w-5 h-5", isActive ? "text-teal-600" : "text-slate-400")} />
-                {item.name}
-              </Button>
-            </Link>
-          );
-        })}
       </nav>
-
-      {/* Support Footer - Wrapped in Link */}
-      <div className="p-4 border-t border-slate-100">
-        <Link href="/support">
-          <Button variant="ghost" className={cn(
-            "w-full justify-start gap-3 text-slate-600 hover:bg-slate-50 py-5",
-            pathname === "/support" && "bg-teal-50 text-teal-800 border-l-4 border-teal-600"
-          )}>
-            <LifeBuoy className={cn("w-5 h-5", pathname === "/support" ? "text-teal-600" : "text-slate-400")} />
-            Support
-          </Button>
-        </Link>
-      </div>
     </aside>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -8,19 +8,16 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { 
   UploadCloud, UserPlus, BookOpen, Eye, ArrowRight, X,
-  Search, Filter, MoreVertical, FileText, Loader2
+  Search, Filter, MoreVertical, FileText, Loader2, AlertCircle
 } from "lucide-react";
 
-// Helper function to calculate age from Date of Birth
 function calculateAge(dobString: string) {
   if (!dobString) return "--";
   const today = new Date();
   const birthDate = new Date(dobString);
   let age = today.getFullYear() - birthDate.getFullYear();
   const m = today.getMonth() - birthDate.getMonth();
-  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-    age--;
-  }
+  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--;
   return age;
 }
 
@@ -35,52 +32,58 @@ interface Patient {
   created_at: string;
 }
 
+interface Report {
+  id: number;
+  is_flagged: boolean;
+}
+
 export function DashboardContent() {
   const [patients, setPatients] = useState<Patient[]>([]);
+  const [reports, setReports] = useState<Report[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   
   // Modal States
   const [isPatientModalOpen, setIsPatientModalOpen] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
-  const [isExtracting, setIsExtracting] = useState(false); // New state for OCR loading
+  const [isExtracting, setIsExtracting] = useState(false);
   
   // Form States
   const [patientFormData, setPatientFormData] = useState({
     first_name: "", last_name: "", date_of_birth: "", gender: "Male", blood_type: "", contact_number: ""
   });
-
   const [reportFormData, setReportFormData] = useState({
     patient_id: "", record_type: "Discharge Summary", content: ""
   });
 
-  const fetchPatients = async () => {
+  // Fetch both Patients and Reports for live metrics
+  const loadData = useCallback(async () => {
     const token = localStorage.getItem("medintel_token");
     if (!token) return;
+
     try {
-      const response = await fetch("http://localhost:8000/api/v1/patients/", {
-        headers: { "Authorization": `Bearer ${token}` }
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setPatients(data);
-      }
+      const [patientsRes, reportsRes] = await Promise.all([
+        fetch("http://localhost:8000/api/v1/patients/", { headers: { "Authorization": `Bearer ${token}` } }),
+        fetch("http://localhost:8000/api/v1/reports/", { headers: { "Authorization": `Bearer ${token}` } })
+      ]);
+
+      if (patientsRes.ok) setPatients(await patientsRes.json());
+      if (reportsRes.ok) setReports(await reportsRes.json());
     } catch (error) {
-      console.error("Failed to fetch patients:", error);
+      console.error("Failed to fetch dashboard data:", error);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchPatients();
-  }, []);
+    loadData();
+  }, [loadData]);
 
   // --- SUBMIT NEW PATIENT ---
   const handleAddPatient = async (e: React.FormEvent) => {
     e.preventDefault();
     const token = localStorage.getItem("medintel_token");
-    if (!token) return;
     try {
       const response = await fetch("http://localhost:8000/api/v1/patients/", {
         method: "POST",
@@ -90,18 +93,15 @@ export function DashboardContent() {
       if (response.ok) {
         setIsPatientModalOpen(false);
         setPatientFormData({ first_name: "", last_name: "", date_of_birth: "", gender: "Male", blood_type: "", contact_number: "" });
-        fetchPatients();
+        loadData();
       }
-    } catch (error) {
-      console.error("Error submitting form:", error);
-    }
+    } catch (error) { console.error("Error submitting patient:", error); }
   };
 
   // --- SUBMIT NEW REPORT ---
   const handleUploadReport = async (e: React.FormEvent) => {
     e.preventDefault();
     const token = localStorage.getItem("medintel_token");
-    if (!token) return;
     try {
       const response = await fetch("http://localhost:8000/api/v1/reports/", {
         method: "POST",
@@ -115,11 +115,9 @@ export function DashboardContent() {
       if (response.ok) {
         setIsReportModalOpen(false);
         setReportFormData({ patient_id: "", record_type: "Discharge Summary", content: "" });
-        alert("Report uploaded successfully!"); 
+        loadData();
       }
-    } catch (error) {
-      console.error("Error uploading report:", error);
-    }
+    } catch (error) { console.error("Error uploading report:", error); }
   };
 
   // --- HANDLE OCR FILE UPLOAD ---
@@ -129,36 +127,28 @@ export function DashboardContent() {
 
     setIsExtracting(true);
     const token = localStorage.getItem("medintel_token");
-
     const formData = new FormData();
     formData.append("file", file);
 
     try {
-      // This calls a backend endpoint we will build next!
       const response = await fetch("http://localhost:8000/api/v1/reports/extract-text", {
         method: "POST",
-        headers: {
-          "Authorization": `Bearer ${token}`
-          // Note: fetch automatically sets the correct multipart/form-data boundaries
-        },
+        headers: { "Authorization": `Bearer ${token}` },
         body: formData
       });
-
       if (response.ok) {
         const data = await response.json();
-        // Append the extracted text to the textarea, keeping any text the user already typed
         setReportFormData(prev => ({
           ...prev,
           content: prev.content ? `${prev.content}\n\n${data.extracted_text}` : data.extracted_text
         }));
       } else {
-        alert("OCR Extraction failed. Make sure the backend endpoint is running!");
+        alert("OCR Extraction failed. Make sure the file is a PDF.");
       }
-    } catch (error) {
-      console.error("Error during OCR:", error);
-    } finally {
+    } catch (error) { console.error("Error during OCR:", error); } 
+    finally {
       setIsExtracting(false);
-      e.target.value = ''; // Reset the input so the same file can be uploaded again if needed
+      e.target.value = ''; 
     }
   };
 
@@ -166,13 +156,42 @@ export function DashboardContent() {
     `${p.first_name} ${p.last_name}`.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // Calculate dynamic metrics
+  const criticalFlagsCount = reports.filter(r => r.is_flagged).length;
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 relative">
       
+      <div className="lg:col-span-12">
+        {/* LIVE METRIC CARDS */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          <Card className="p-5 shadow-sm border-slate-200 bg-white">
+            <p className="text-sm font-medium text-slate-500 mb-1">Total Patients</p>
+            <h3 className="text-3xl font-bold text-slate-900">{patients.length}</h3>
+          </Card>
+
+          <Card className="p-5 shadow-sm border-slate-200 bg-white">
+            <p className="text-sm font-medium text-slate-500 mb-1">Reports Analyzed</p>
+            <h3 className="text-3xl font-bold text-slate-900">{reports.length}</h3>
+          </Card>
+
+          <Card className="p-5 shadow-sm border-l-4 border-l-rose-500 border-t-slate-200 border-b-slate-200 border-r-slate-200 bg-rose-50/20">
+            <div className="flex justify-between items-start mb-1">
+              <p className="text-sm font-medium text-slate-600">Critical Flags</p>
+              <span className="text-[10px] font-bold text-rose-700 bg-rose-100 px-2 py-0.5 rounded uppercase tracking-wider">Action Needed</span>
+            </div>
+            <h3 className="text-3xl font-bold text-rose-700">{criticalFlagsCount}</h3>
+          </Card>
+
+          <Card className="p-5 shadow-sm border-slate-200 bg-white">
+            <p className="text-sm font-medium text-slate-500 mb-1">Pending Reviews</p>
+            <h3 className="text-3xl font-bold text-slate-900">0</h3>
+          </Card>
+        </div>
+      </div>
+
       {/* LEFT COLUMN: Main Workspace */}
       <div className="lg:col-span-8 flex flex-col gap-6">
-        
-        {/* Search & Filter Bar */}
         <Card className="p-4 shadow-sm border-slate-200 bg-white">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="relative w-full md:max-w-md">
@@ -184,7 +203,6 @@ export function DashboardContent() {
                 className="pl-10 bg-slate-50 border-slate-200 rounded-lg focus-visible:ring-teal-600"
               />
             </div>
-            
             <div className="flex items-center gap-3 w-full md:w-auto justify-end">
               <div className="flex bg-slate-100 p-1 rounded-lg border border-slate-200 text-xs font-semibold text-slate-600">
                 <button className="bg-white text-teal-800 px-3 py-1.5 rounded-md shadow-sm">All</button>
@@ -194,7 +212,6 @@ export function DashboardContent() {
           </div>
         </Card>
 
-        {/* Patients Table */}
         <Card className="shadow-sm border-slate-200 bg-white overflow-hidden min-h-[400px]">
           <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
             <h2 className="text-sm font-bold text-teal-900 uppercase tracking-wider">Patient Registry</h2>
@@ -277,7 +294,6 @@ export function DashboardContent() {
           <h3 className="text-xs font-bold text-teal-800 uppercase tracking-wider mb-4">Quick Actions</h3>
           <div className="flex flex-col gap-3">
             
-            {/* UPLOAD REPORT TRIGGER */}
             <div 
               onClick={() => setIsReportModalOpen(true)}
               className="flex items-center gap-4 bg-white p-4 rounded-lg border border-slate-200 shadow-sm hover:border-teal-400 cursor-pointer transition-all group"
@@ -292,7 +308,6 @@ export function DashboardContent() {
               <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-teal-600" />
             </div>
 
-            {/* ADD PATIENT TRIGGER */}
             <div 
               onClick={() => setIsPatientModalOpen(true)}
               className="flex items-center gap-4 bg-white p-4 rounded-lg border border-slate-200 shadow-sm hover:border-teal-400 cursor-pointer transition-all group"
@@ -320,26 +335,7 @@ export function DashboardContent() {
 
           </div>
         </Card>
-
-        {/* Alerts Card */}
-        <Card className="shadow-sm border-rose-200 bg-white overflow-hidden">
-          <div className="bg-rose-50 px-5 py-3 border-b border-rose-100 flex justify-between items-center">
-            <h3 className="text-sm font-bold text-rose-800">Cases Requiring Attention</h3>
-            <Badge className="bg-rose-600 hover:bg-rose-700 text-white">3 Critical</Badge>
-          </div>
-          <div className="p-5 border-l-4 border-l-rose-500 m-4 shadow-sm border border-slate-100 rounded-r-lg">
-            <div className="flex justify-between items-start mb-2">
-              <h4 className="font-bold text-slate-900">System Alert</h4>
-              <span className="text-xs text-slate-400">Just now</span>
-            </div>
-            <p className="text-sm text-slate-600 mb-4">
-              AI Analysis requires clinical records. Please select a patient to upload documents.
-            </p>
-          </div>
-        </Card>
       </div>
-
-      {/* ================= MODALS ================= */}
 
       {/* 1. ADD PATIENT MODAL */}
       {isPatientModalOpen && (
@@ -412,8 +408,6 @@ export function DashboardContent() {
             </div>
             
             <form onSubmit={handleUploadReport} className="flex flex-col gap-4">
-              
-              {/* Select Patient Dropdown */}
               <div>
                 <label className="text-xs font-bold text-slate-600 uppercase">Select Patient</label>
                 <select 
@@ -431,7 +425,6 @@ export function DashboardContent() {
                 </select>
               </div>
 
-              {/* Report Type Dropdown */}
               <div>
                 <label className="text-xs font-bold text-slate-600 uppercase">Document Type</label>
                 <select 
@@ -448,7 +441,6 @@ export function DashboardContent() {
                 </select>
               </div>
 
-              {/* Report Content Textarea with OCR Upload */}
               <div className="flex flex-col gap-1">
                 <div className="flex justify-between items-end">
                   <label className="text-xs font-bold text-slate-600 uppercase">Clinical Text</label>
@@ -457,7 +449,7 @@ export function DashboardContent() {
                       type="file"
                       id="ocr-file-upload"
                       className="hidden"
-                      accept=".pdf,.png,.jpg,.jpeg"
+                      accept=".pdf"
                       onChange={handleFileUpload}
                       disabled={isExtracting}
                     />
