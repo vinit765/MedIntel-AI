@@ -9,6 +9,13 @@ from app.core.config import settings
 from app.core.logging import configure_logging
 from app.database.init_db import init_db
 
+from app.database.session import engine
+from app.database import models
+
+
+models.Base.metadata.create_all(bind=engine)
+
+
 
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
