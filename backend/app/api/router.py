@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.api.routers import health, auth, users  # We imported users here
+from app.api.routers import health, auth, users, patients, reports  # We imported users here
 
 api_router = APIRouter()
 
@@ -9,3 +9,5 @@ api_router.include_router(auth.router, prefix="/auth", tags=["Authentication"])
 
 # Add the new users router
 api_router.include_router(users.router, prefix="/users", tags=["Users"])
+api_router.include_router(patients.router, prefix="/patients", tags=["Patients"])
+api_router.include_router(reports.router, prefix="/reports", tags=["Clinical Reports"])

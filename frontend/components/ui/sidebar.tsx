@@ -11,7 +11,6 @@ import {
 
 const mainNav = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { name: "Patients", href: "/patients", icon: Users },
   { name: "Medical Reports", href: "/reports", icon: FileText },
   { name: "AI Analysis", href: "/analysis", icon: Activity },
   { name: "Risk Intelligence", href: "/risk", icon: AlertTriangle },
