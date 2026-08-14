@@ -16,3 +16,16 @@ def create_report(db: Session, report_in: ReportCreate, author_id: int) -> Clini
     db.refresh(db_report)
     
     return db_report
+
+def get_reports_by_author(db: Session, author_id: int) -> list[ClinicalRecord]:
+    """Retrieves all clinical records uploaded by a specific clinician, newest first."""
+    return db.query(ClinicalRecord).filter(
+        ClinicalRecord.author_id == author_id
+    ).order_by(ClinicalRecord.created_at.desc()).all()
+
+def get_report_by_id(db: Session, report_id: int, author_id: int) -> ClinicalRecord:
+    """Retrieves a single clinical record by ID, verifying ownership."""
+    return db.query(ClinicalRecord).filter(
+        ClinicalRecord.id == report_id,
+        ClinicalRecord.author_id == author_id
+    ).first()
