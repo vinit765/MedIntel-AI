@@ -65,6 +65,7 @@ ollama/
 # ===========================
 chroma/
 chromadb/
+chroma_db/
 vector_db/
 
 # ===========================
