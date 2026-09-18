@@ -310,16 +310,13 @@ export default function ReportsPage() {
                       </TableCell>
 
                       <TableCell className="text-right pr-6">
-                        <div className="flex items-center justify-end gap-2">
-                          <button 
+                        <div className="flex items-center justify-end">
+                          <button
                             onClick={() => window.location.href = `/reports/${report.id}`}
-                            className="text-slate-400 hover:text-teal-700 p-1.5 rounded-md hover:bg-slate-100 transition-colors" 
+                            className="text-slate-400 hover:text-teal-700 p-1.5 rounded-md hover:bg-slate-100 transition-colors"
                             title="View Report"
                           >
-                            <Eye className="w-4 h-4" />
-                          </button>
-                          <button className="text-slate-400 hover:text-slate-700 p-1.5 rounded-md hover:bg-slate-100 transition-colors" title="Download">
-                            <Download className="w-4 h-4" />
+                            <Eye className="w-5 h-5" />
                           </button>
                         </div>
                       </TableCell>

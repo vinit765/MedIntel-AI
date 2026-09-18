@@ -7,8 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { 
-  UploadCloud, UserPlus, BookOpen, Eye, ArrowRight, X,
-  Search, Filter, MoreVertical, FileText, Loader2, AlertCircle
+  UploadCloud, UserPlus, BookOpen, ArrowRight, X,
+  Search, Filter, FileText, Loader2, AlertCircle
 } from "lucide-react";
 
 function calculateAge(dobString: string) {
@@ -233,8 +233,7 @@ export function DashboardContent() {
                   <TableHead className="font-semibold text-slate-600 py-4 pl-6">Patient Name & MRN</TableHead>
                   <TableHead className="font-semibold text-slate-600">Age / Sex</TableHead>
                   <TableHead className="font-semibold text-slate-600">Blood Type</TableHead>
-                  <TableHead className="font-semibold text-slate-600">Status</TableHead>
-                  <TableHead className="font-semibold text-slate-600 text-right pr-6">Actions</TableHead>
+                  <TableHead className="font-semibold text-slate-600 text-right pr-6">Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -264,21 +263,10 @@ export function DashboardContent() {
                       </Badge>
                     </TableCell>
 
-                    <TableCell>
+                    <TableCell className="text-right pr-6">
                       <Badge variant="outline" className="bg-teal-50 text-teal-700 border-teal-200">
                         Stable
                       </Badge>
-                    </TableCell>
-
-                    <TableCell className="text-right pr-6">
-                      <div className="flex items-center justify-end gap-2">
-                        <button className="text-slate-400 hover:text-teal-700 p-1.5 rounded-md hover:bg-slate-100 transition-colors">
-                          <Eye className="w-4 h-4" />
-                        </button>
-                        <button className="text-slate-400 hover:text-slate-700 p-1.5 rounded-md hover:bg-slate-100 transition-colors">
-                          <MoreVertical className="w-4 h-4" />
-                        </button>
-                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
