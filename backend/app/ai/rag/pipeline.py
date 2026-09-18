@@ -71,20 +71,18 @@ def analyze_clinical_text(report_text: str) -> Dict[str, Any]:
     
     Provide your output strictly in this exact format:
     EXECUTIVE SUMMARY:
-    - (Point 1: Patient demographic and primary presentation)
-    - (Point 2: Key vital and laboratory observations)
-    - (Point 3: Overall clinical recommendation or next step)
+    - (Summarize patient demographics and primary reason for visit)
+    - (List the most critical vital or laboratory abnormalities)
+    - (State the overall clinical recommendation or next step)
 
     RISK ANALYSIS:
-    - (Point 1: Blood pressure evaluation and out-of-office confirmation requirement)
-    - (Point 2: Glycaemic findings and diabetes threshold comparison)
-    - (Point 3: Haemoglobin status and anaemia classification)
-    - (Point 4: Renal function findings and chronicity assessment)
+    - (Identify the primary disease risk or critical health threat)
+    - (Identify any secondary anomalies, like high blood pressure or metabolic issues)
+    - (Note any missing data or required follow-up tests)
 
     EVIDENCE REFERENCES:
-    - (Point 1: Specific guideline name and recommendation locator used)
-    - (Point 2: Next relevant guideline cited)
-    - (Point 3: Additional authority cited)
+    - (Cite the specific medical guideline and recommendation used from the database)
+    - (Cite any secondary guidelines used, or write 'None')
     """
     
     # 3. Generation
@@ -98,3 +96,43 @@ def analyze_clinical_text(report_text: str) -> Dict[str, Any]:
         "raw_response": response,
         "context_used": context
     }
+
+# ==========================================
+# NEW FUNCTION ADDED FOR COPILOT
+# ==========================================
+
+def chat_with_copilot(message: str, patient_context: str = "") -> str:
+    """
+    Handles conversational queries. Uses ChromaDB to fetch clinical guidelines
+    and combines them with the live patient database context.
+    """
+    # 1. Retrieve clinical guidelines based on the doctor's message
+    retrieved_docs = vector_store.similarity_search(message, k=4)
+    guideline_context = "\n\n".join([doc.page_content for doc in retrieved_docs])
+    
+    # 2. Build the dynamic prompt
+    prompt = f"""
+    You are MedIntel AI, an expert clinical assistant. Answer the doctor's query.
+    
+    CRITICAL INSTRUCTIONS:
+    - Be concise, professional, and medical in tone.
+    - If Patient Context is provided, base your answer heavily on those records.
+    - If Clinical Guidelines are relevant, cite them.
+    - Do NOT hallucinate patient data.
+    
+    PATIENT CONTEXT (From Hospital Database):
+    {patient_context if patient_context else "No active patient selected."}
+    
+    CLINICAL GUIDELINES (From Vector Database):
+    {guideline_context if guideline_context else "No specific guidelines found."}
+    
+    DOCTOR'S QUERY:
+    {message}
+    """
+    
+    # 3. Generate response
+    try:
+        return llm.invoke(prompt)
+    except Exception as e:
+        print(f"Ollama Connection Error: {e}")
+        return "I am currently unable to connect to the local AI engine. Please verify Ollama is running."

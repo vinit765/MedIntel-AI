@@ -25,15 +25,18 @@ def run_ai_analysis(
     # 2. Run the AI Service
     try:
         ai_result = analyze_clinical_text(report.content)
+        raw_text = ai_result["raw_response"]
         
-        # 3. Determine if the AI flagged risks (simple keyword check for demonstration)
-        raw_text = ai_result["raw_response"].lower()
-        is_flagged = "high-risk" in raw_text or "anomaly" in raw_text or "abnormal" in raw_text
+        # 3. Determine if the AI flagged risks
+        raw_text_lower = raw_text.lower()
+        is_flagged = "high-risk" in raw_text_lower or "anomaly" in raw_text_lower or "abnormal" in raw_text_lower
         
-        # 4. Update the database flag so the frontend Dashboard knows it needs attention
-        if is_flagged != report.is_flagged:
-            report.is_flagged = is_flagged
-            db.commit()
+        # 4. Update the database flag AND save the AI analysis text
+        report.is_flagged = is_flagged
+        report.ai_analysis = raw_text
+        
+        db.commit()
+        db.refresh(report)
             
         return ai_result
         

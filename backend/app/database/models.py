@@ -15,8 +15,6 @@ class User(Base):
     hashed_password = Column(String, nullable=False)
     role = Column(String, default="CLINICIAN")
     is_active = Column(Boolean, default=True)
-    
-    # ADD THIS LINE RIGHT HERE:
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     # Relationships
@@ -35,7 +33,6 @@ class Patient(Base):
     blood_type = Column(String, nullable=True)
     contact_number = Column(String, nullable=True)
     
-    # Link the patient to the doctor who registered them
     physician_id = Column(Integer, ForeignKey("users.id"))
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
@@ -51,9 +48,10 @@ class ClinicalRecord(Base):
     patient_id = Column(Integer, ForeignKey("patients.id"))
     author_id = Column(Integer, ForeignKey("users.id"))
     
-    record_type = Column(String) # e.g., "Discharge Summary", "Lab Result"
+    record_type = Column(String)
     content = Column(Text)       
     is_flagged = Column(Boolean, default=False) 
+    ai_analysis = Column(Text, nullable=True) # <-- NEW COLUMN ADDED HERE
     
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     
